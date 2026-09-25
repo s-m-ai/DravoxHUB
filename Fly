@@ -1,0 +1,294 @@
+--แจกฟรีไปพัฒนาต่อได้ 
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+player.CharacterAdded:Connect(function(char)
+	character = char
+	humanoid = char:WaitForChild("Humanoid")
+	hrp = char:WaitForChild("HumanoidRootPart")
+end)
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "DravoxFlyGUI"
+gui.ResetOnSpawn = false
+gui.Parent = player.PlayerGui
+
+local THEME = {
+	Background   = Color3.fromRGB(25, 10, 10),
+	Button       = Color3.fromRGB(110, 25, 25),
+	ButtonHover  = Color3.fromRGB(160, 40, 40),
+	Text         = Color3.fromRGB(255, 225, 225),
+	Title        = Color3.fromRGB(70, 15, 15),
+	Accent       = Color3.fromRGB(180, 45, 45),
+	AccentHover  = Color3.fromRGB(220, 70, 70),
+	Border       = Color3.fromRGB(0, 0, 0),
+	Close        = Color3.fromRGB(255, 30, 30),
+	CloseHover   = Color3.fromRGB(255, 90, 90),
+}
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 300, 0, 120)
+frame.Position = UDim2.new(0.35, 0, 0.3, 0)
+frame.BackgroundColor3 = THEME.Background
+frame.BorderSizePixel = 2
+frame.BorderColor3 = THEME.Border
+frame.Active = true
+frame.Draggable = true
+frame.ClipsDescendants = true
+frame.Parent = gui
+
+local bgImage = Instance.new("ImageLabel")
+bgImage.Name = "BackgroundImage"
+bgImage.Image = "rbxassetid://102943312710311"
+bgImage.Size = UDim2.new(1, 0, 1, 0)
+bgImage.Position = UDim2.new(0, 0, 0, 0)
+bgImage.BackgroundTransparency = 1
+bgImage.ImageTransparency = 0.3
+bgImage.ScaleType = Enum.ScaleType.Crop
+bgImage.ZIndex = 1
+bgImage.Parent = frame
+
+local function Button(text, color, pos, size, hoverColor)
+	local b = Instance.new("TextButton")
+	b.Text = text
+	b.BackgroundColor3 = color
+	b.Position = pos
+	b.Size = size
+	b.TextScaled = true
+	b.Font = Enum.Font.SourceSansBold
+	b.TextColor3 = THEME.Text
+	b.BorderSizePixel = 2
+	b.BorderColor3 = THEME.Border
+	b.AutoButtonColor = false
+	b.ZIndex = 2
+	b.Parent = frame
+
+	if hoverColor then
+		b.MouseEnter:Connect(function()
+			b.BackgroundColor3 = hoverColor
+		end)
+		b.MouseLeave:Connect(function()
+			b.BackgroundColor3 = color
+		end)
+	end
+
+	return b
+end
+
+local closeBtn = Button("X", THEME.Close, UDim2.new(0,0,0,0), UDim2.new(0,60,0,40), THEME.CloseHover)
+local hideBtn  = Button("-", THEME.Close, UDim2.new(0,60,0,0), UDim2.new(0,60,0,40), THEME.CloseHover)
+local upBtn    = Button("UP", THEME.Button, UDim2.new(0,0,0,40), UDim2.new(0,60,0,40), THEME.ButtonHover)
+local plusBtn  = Button("+", THEME.Button, UDim2.new(0,60,0,40), UDim2.new(0,60,0,40), THEME.ButtonHover)
+local downBtn  = Button("DOWN", THEME.Button, UDim2.new(0,0,0,80), UDim2.new(0,60,0,40), THEME.ButtonHover)
+local minusBtn = Button("-", THEME.Button, UDim2.new(0,60,0,80), UDim2.new(0,60,0,40), THEME.ButtonHover)
+local flyBtn   = Button("fly", THEME.Button, UDim2.new(0,210,0,80), UDim2.new(0,90,0,40), THEME.ButtonHover)
+
+local title = Instance.new("TextLabel")
+title.Text = "Dravox FLY"
+title.Size = UDim2.new(0, 180, 0, 40)
+title.Position = UDim2.new(0, 120, 0, 40)
+title.BackgroundColor3 = THEME.Title
+title.TextScaled = true
+title.Font = Enum.Font.SourceSansBold
+title.TextColor3 = THEME.Text
+title.BorderSizePixel = 2
+title.BorderColor3 = THEME.Border
+title.ZIndex = 2
+title.Parent = frame
+
+-- speedBox : TextBox พิมพ์ตัวเลขเองได้ไม่จำกัด
+local speedBox = Instance.new("TextBox")
+speedBox.Text = "1"
+speedBox.Size = UDim2.new(0, 90, 0, 40)
+speedBox.Position = UDim2.new(0, 120, 0, 80)
+speedBox.BackgroundColor3 = THEME.Accent
+speedBox.TextScaled = true
+speedBox.Font = Enum.Font.SourceSansBold
+speedBox.TextColor3 = THEME.Text
+speedBox.BorderSizePixel = 2
+speedBox.BorderColor3 = THEME.Border
+speedBox.ClearTextOnFocus = false
+speedBox.ZIndex = 2
+speedBox.Parent = frame
+
+speedBox.MouseEnter:Connect(function()
+	if not speedBox:IsFocused() then
+		speedBox.BackgroundColor3 = THEME.AccentHover
+	end
+end)
+speedBox.MouseLeave:Connect(function()
+	if not speedBox:IsFocused() then
+		speedBox.BackgroundColor3 = THEME.Accent
+	end
+end)
+
+local flying = false
+local speed = 1
+local vertical = 0
+speedBox.Text = tostring(speed)
+
+local bv, bg
+
+-- ฟังก์ชันอัปเดตข้อความในช่อง speed
+local function updateSpeedText()
+	speedBox.Text = tostring(speed)
+end
+
+-- commit ค่าที่พิมพ์ / revert ถ้าไม่ถูกต้อง
+local function commitSpeed()
+	local num = tonumber(speedBox.Text)
+	if num and num > 0 then
+		speed = num
+	end
+	updateSpeedText()
+end
+
+speedBox.FocusLost:Connect(function()
+	commitSpeed()
+	speedBox.BackgroundColor3 = THEME.Accent
+end)
+
+speedBox.Focused:Connect(function()
+	speedBox.BackgroundColor3 = THEME.AccentHover
+end)
+
+plusBtn.MouseButton1Click:Connect(function()
+	speed += 1
+	updateSpeedText()
+end)
+
+minusBtn.MouseButton1Click:Connect(function()
+	speed = math.max(0.1, speed - 1)
+	updateSpeedText()
+end)
+
+upBtn.MouseButton1Down:Connect(function() vertical = 1 end)
+upBtn.MouseButton1Up:Connect(function() vertical = 0 end)
+downBtn.MouseButton1Down:Connect(function() vertical = -1 end)
+downBtn.MouseButton1Up:Connect(function() vertical = 0 end)
+
+-- ============================================
+-- อนิเมชั่นซ่อน/แสดง
+-- ============================================
+
+local hideableElements = {}
+for _, v in pairs(frame:GetChildren()) do
+	if v ~= hideBtn and v ~= closeBtn and v ~= bgImage then
+		table.insert(hideableElements, v)
+	end
+end
+
+local originalTransparency = {}
+for _, v in ipairs(hideableElements) do
+	local isText = (v:IsA("TextLabel") or v:IsA("TextButton") or v:IsA("TextBox"))
+	originalTransparency[v] = {
+		Background = v.BackgroundTransparency,
+		Text = isText and v.TextTransparency or nil,
+		TextStroke = isText and v.TextStrokeTransparency or nil,
+	}
+end
+
+local TWEEN_INFO = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+local function tweenTo(element, props)
+	local t = TweenService:Create(element, TWEEN_INFO, props)
+	t:Play()
+	return t
+end
+
+local hidden = false
+local isAnimating = false
+
+hideBtn.MouseButton1Click:Connect(function()
+	if isAnimating then return end
+	isAnimating = true
+	hidden = not hidden
+
+	if hidden then
+		hideBtn.Text = "+"
+		tweenTo(frame, { Size = UDim2.new(0, 120, 0, 40) })
+		for _, v in ipairs(hideableElements) do
+			local props = { BackgroundTransparency = 1 }
+			if v:IsA("TextLabel") or v:IsA("TextButton") or v:IsA("TextBox") then
+				props.TextTransparency = 1
+				props.TextStrokeTransparency = 1
+			end
+			tweenTo(v, props)
+		end
+		task.delay(TWEEN_INFO.Time, function()
+			for _, v in ipairs(hideableElements) do
+				v.Visible = false
+			end
+			isAnimating = false
+		end)
+	else
+		hideBtn.Text = "-"
+		for _, v in ipairs(hideableElements) do
+			v.Visible = true
+		end
+		tweenTo(frame, { Size = UDim2.new(0, 300, 0, 120) })
+		for _, v in ipairs(hideableElements) do
+			local orig = originalTransparency[v]
+			local props = { BackgroundTransparency = orig.Background }
+			if v:IsA("TextLabel") or v:IsA("TextButton") or v:IsA("TextBox") then
+				props.TextTransparency = tonumber(orig.Text) or 0
+				props.TextStrokeTransparency = tonumber(orig.TextStroke) or 1
+			end
+			tweenTo(v, props)
+		end
+		task.delay(TWEEN_INFO.Time, function()
+			isAnimating = false
+		end)
+	end
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+	gui:Destroy()
+end)
+
+flyBtn.MouseButton1Click:Connect(function()
+	flying = not flying
+	if flying then
+		flyBtn.Text = "unfly"
+		flyBtn.BackgroundColor3 = THEME.Accent
+		bv = Instance.new("BodyVelocity")
+		bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+		bv.Velocity = Vector3.zero
+		bv.Parent = hrp
+		bg = Instance.new("BodyGyro")
+		bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+		bg.P = 10000
+		bg.Parent = hrp
+		humanoid.PlatformStand = true
+	else
+		flyBtn.Text = "fly"
+		flyBtn.BackgroundColor3 = THEME.Button
+		if bv then bv:Destroy() end
+		if bg then bg:Destroy() end
+		humanoid.PlatformStand = false
+	end
+end)
+
+RunService.RenderStepped:Connect(function()
+	if flying and hrp and humanoid and bv and bg then
+		local cam = workspace.CurrentCamera
+		local move = humanoid.MoveDirection
+		local localMove = hrp.CFrame:VectorToObjectSpace(move)
+		local velocity =
+			(hrp.CFrame.LookVector * -localMove.Z) +
+			(hrp.CFrame.RightVector * localMove.X)
+		velocity += Vector3.new(0, vertical, 0)
+		if velocity.Magnitude > 0 then
+			velocity = velocity.Unit
+		end
+		bv.Velocity = velocity * (speed * 20)
+		bg.CFrame = cam.CFrame
+	end
+end)

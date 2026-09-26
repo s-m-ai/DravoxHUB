@@ -1,4 +1,4 @@
---แจกฟรีไปพัฒนาต่อได้ 
+--แจกฟรี สร้างโดย:iamrealsixseven
 
 --[[
 	Dravox Mobile | Fly Script
@@ -6,6 +6,7 @@
 	Author: iamrealsixseven (คนไทย)
 	Edited: iamrealsixseven (ฉัน,ฉัน และฉัน)
 ]]
+
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -111,7 +112,6 @@ title.BorderColor3 = THEME.Border
 title.ZIndex = 2
 title.Parent = frame
 
--- speedBox : TextBox พิมพ์ตัวเลขเองได้ไม่จำกัด
 local speedBox = Instance.new("TextBox")
 speedBox.Text = "5"
 speedBox.Size = UDim2.new(0, 90, 0, 40)
@@ -138,18 +138,16 @@ speedBox.MouseLeave:Connect(function()
 end)
 
 local flying = false
-local speed = 1
+local speed = 5
 local vertical = 0
 speedBox.Text = tostring(speed)
 
 local bv, bg
 
--- ฟังก์ชันอัปเดตข้อความในช่อง speed
 local function updateSpeedText()
 	speedBox.Text = tostring(speed)
 end
 
--- commit ค่าที่พิมพ์ / revert ถ้าไม่ถูกต้อง
 local function commitSpeed()
 	local num = tonumber(speedBox.Text)
 	if num and num > 0 then

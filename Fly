@@ -113,7 +113,7 @@ title.Parent = frame
 
 -- speedBox : TextBox พิมพ์ตัวเลขเองได้ไม่จำกัด
 local speedBox = Instance.new("TextBox")
-speedBox.Text = "1"
+speedBox.Text = "5"
 speedBox.Size = UDim2.new(0, 90, 0, 40)
 speedBox.Position = UDim2.new(0, 120, 0, 80)
 speedBox.BackgroundColor3 = THEME.Accent

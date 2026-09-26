@@ -7,7 +7,6 @@
 	Edited: iamrealsixseven (ฉัน,ฉัน และฉัน)
 ]]
 
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -112,6 +111,9 @@ title.BorderColor3 = THEME.Border
 title.ZIndex = 2
 title.Parent = frame
 
+-- ค่าเริ่มต้นความเร็ว = 5
+local speed = 5
+
 local speedBox = Instance.new("TextBox")
 speedBox.Text = "5"
 speedBox.Size = UDim2.new(0, 90, 0, 40)
@@ -138,9 +140,7 @@ speedBox.MouseLeave:Connect(function()
 end)
 
 local flying = false
-local speed = 5
 local vertical = 0
-speedBox.Text = tostring(speed)
 
 local bv, bg
 

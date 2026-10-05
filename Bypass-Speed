@@ -1,6 +1,11 @@
--- ============================================
--- Bypass Speed | By Dravox-Script
--- ============================================
+--แจกฟรี สร้างโดย:iamrealsixseven
+
+--[[
+	Dravox Mobile | Bypass-Speed Script
+	Made by: iamrealsixseven (Roblox User)
+	Author: iamrealsixseven (คนไทย)
+	Edited: iamrealsixseven (ฉัน,ฉัน และฉัน)
+]]
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")

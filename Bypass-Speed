@@ -1,0 +1,289 @@
+-- ============================================
+-- Bypass Speed | By Dravox-Script
+-- ============================================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- ลบ GUI เก่า
+local oldGui = playerGui:FindFirstChild("SpeedGui")
+if oldGui then oldGui:Destroy() end
+
+-- ============================================
+-- ค่าที่ใช้
+-- ============================================
+local targetSpeed = 16
+local isLocking = false
+local lockConnection = nil
+
+-- สีปุ่ม
+local RED_BTN    = Color3.fromRGB(200, 30, 30)
+local GREEN_BTN  = Color3.fromRGB(40, 190, 80)
+
+-- ============================================
+-- ScreenGui
+-- ============================================
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "SpeedGui"
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = playerGui
+
+-- ============================================
+-- Helper
+-- ============================================
+local function addCorner(parent, radius)
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, radius or 8)
+	c.Parent = parent
+	return c
+end
+
+local function addStroke(parent, color, thickness)
+	local s = Instance.new("UIStroke")
+	s.Color = color or Color3.fromRGB(200, 30, 30)
+	s.Thickness = thickness or 1.5
+	s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	s.Parent = parent
+	return s
+end
+
+-- ============================================
+-- Main Frame (ดำ)
+-- ============================================
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 260, 0, 190)
+mainFrame.Position = UDim2.new(0.5, -130, 0.5, -95)
+mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+addCorner(mainFrame, 14)
+addStroke(mainFrame, Color3.fromRGB(220, 30, 30), 2)
+
+-- ============================================
+-- Header (แดงเข้ม)
+-- ============================================
+local header = Instance.new("Frame")
+header.Name = "Header"
+header.Size = UDim2.new(1, 0, 0, 40)
+header.BackgroundColor3 = Color3.fromRGB(140, 15, 15)
+header.BorderSizePixel = 0
+header.Parent = mainFrame
+addCorner(header, 14)
+
+local headerFix = Instance.new("Frame")
+headerFix.Size = UDim2.new(1, 0, 0, 14)
+headerFix.Position = UDim2.new(0, 0, 1, -14)
+headerFix.BackgroundColor3 = Color3.fromRGB(140, 15, 15)
+headerFix.BorderSizePixel = 0
+headerFix.Parent = header
+
+-- ============================================
+-- Title (มี Outline สีดำ)
+-- ============================================
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -50, 1, 0)
+title.Position = UDim2.new(0, 15, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "🔥  Bypass Speed"
+title.TextColor3 = Color3.fromRGB(255, 240, 240)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 16
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = header
+
+local titleStroke = Instance.new("UIStroke")
+titleStroke.Color = Color3.fromRGB(0, 0, 0)
+titleStroke.Thickness = 2
+titleStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+titleStroke.Parent = title
+
+-- ============================================
+-- ปุ่มปิด (Outline ดำ)
+-- ============================================
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -38, 0.5, -15)
+closeBtn.BackgroundColor3 = Color3.fromRGB(230, 40, 40)
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 14
+closeBtn.BorderSizePixel = 0
+closeBtn.AutoButtonColor = false
+closeBtn.Parent = header
+addCorner(closeBtn, 8)
+
+local closeStroke = Instance.new("UIStroke")
+closeStroke.Color = Color3.fromRGB(0, 0, 0)
+closeStroke.Thickness = 2
+closeStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+closeStroke.Parent = closeBtn
+
+closeBtn.MouseButton1Click:Connect(function()
+	if lockConnection then
+		lockConnection:Disconnect()
+		lockConnection = nil
+	end
+	isLocking = false
+	screenGui:Destroy()
+end)
+
+-- ============================================
+-- TextBox
+-- ============================================
+local textBox = Instance.new("TextBox")
+textBox.Name = "SpeedBox"
+textBox.Size = UDim2.new(1, -30, 0, 40)
+textBox.Position = UDim2.new(0, 15, 0, 55)
+textBox.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+textBox.TextColor3 = Color3.fromRGB(255, 220, 220)
+textBox.PlaceholderText = "ใส่ค่า Speed..."
+textBox.PlaceholderColor3 = Color3.fromRGB(140, 100, 100)
+textBox.Font = Enum.Font.Gotham
+textBox.TextSize = 15
+textBox.Text = ""
+textBox.ClearTextOnFocus = false
+textBox.BorderSizePixel = 0
+textBox.Parent = mainFrame
+addCorner(textBox, 8)
+addStroke(textBox, Color3.fromRGB(180, 40, 40), 1.5)
+
+-- ============================================
+-- ปุ่มตกลง
+-- ============================================
+local okButton = Instance.new("TextButton")
+okButton.Name = "OkButton"
+okButton.Size = UDim2.new(1, -30, 0, 42)
+okButton.Position = UDim2.new(0, 15, 0, 103)
+okButton.BackgroundColor3 = RED_BTN
+okButton.Text = "ตกลง ✅"
+okButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+okButton.Font = Enum.Font.GothamBold
+okButton.TextSize = 16
+okButton.BorderSizePixel = 0
+okButton.AutoButtonColor = false
+okButton.Parent = mainFrame
+addCorner(okButton, 8)
+addStroke(okButton, Color3.fromRGB(255, 100, 100), 1.5)
+
+-- ============================================
+-- เครดิต
+-- ============================================
+local credit = Instance.new("TextLabel")
+credit.Name = "Credit"
+credit.Size = UDim2.new(1, -30, 0, 20)
+credit.Position = UDim2.new(0, 15, 1, -28)
+credit.BackgroundTransparency = 1
+credit.Text = "By Dravox-Script"
+credit.TextColor3 = Color3.fromRGB(220, 60, 60)
+credit.Font = Enum.Font.GothamBold
+credit.TextSize = 13
+credit.TextXAlignment = Enum.TextXAlignment.Center
+credit.Parent = mainFrame
+
+-- ============================================
+-- ฟังก์ชันล็อก Speed รัวๆ
+-- ============================================
+local function startSpeedLock(speed)
+	targetSpeed = speed
+	isLocking = true
+
+	if lockConnection then
+		lockConnection:Disconnect()
+	end
+
+	local conn1 = RunService.RenderStepped:Connect(function()
+		if not isLocking then return end
+		local char = player.Character
+		if char then
+			local hum = char:FindFirstChildOfClass("Humanoid")
+			if hum and hum.WalkSpeed ~= targetSpeed then
+				hum.WalkSpeed = targetSpeed
+			end
+		end
+	end)
+
+	local conn2 = RunService.Heartbeat:Connect(function()
+		if not isLocking then return end
+		local char = player.Character
+		if char then
+			local hum = char:FindFirstChildOfClass("Humanoid")
+			if hum and hum.WalkSpeed ~= targetSpeed then
+				hum.WalkSpeed = targetSpeed
+			end
+		end
+	end)
+
+	lockConnection = {
+		Disconnect = function()
+			conn1:Disconnect()
+			conn2:Disconnect()
+		end
+	}
+end
+
+-- ============================================
+-- Event ปุ่มตกลง
+-- ============================================
+local isShowingFeedback = false
+
+okButton.MouseButton1Click:Connect(function()
+	if isShowingFeedback then return end   -- กัน spam ตอนแสดง feedback
+
+	local input = tonumber(textBox.Text)
+
+	if not input then
+		-- ใส่ผิด → แดงเหมือนเดิม แค่เปลี่ยนข้อความ
+		isShowingFeedback = true
+		local oldText = okButton.Text
+		okButton.Text = "❌ ใส่ตัวเลข!"
+		task.wait(1)
+		okButton.Text = oldText
+		isShowingFeedback = false
+		return
+	end
+
+	startSpeedLock(input)
+
+	local focused = UserInputService:GetFocusedTextBox()
+	if focused then focused:ReleaseFocus() end
+
+	-- ✅ สำเร็จ → เปลี่ยนเป็นสีเขียว
+	isShowingFeedback = true
+	local oldText = okButton.Text
+
+	okButton.BackgroundColor3 = GREEN_BTN
+	okButton.Text = "🔥 ล็อกที่ " .. tostring(input)
+
+	task.wait(1)
+
+	-- กลับเป็นสีแดงเหมือนเดิม
+	okButton.BackgroundColor3 = RED_BTN
+	okButton.Text = oldText
+	isShowingFeedback = false
+end)
+
+textBox.FocusLost:Connect(function(enterPressed)
+	if enterPressed then
+		okButton.MouseButton1Click()
+	end
+end)
+
+-- ============================================
+-- Lock ต่อหลัง respawn
+-- ============================================
+player.CharacterAdded:Connect(function()
+	if isLocking then
+		task.wait(1)
+		startSpeedLock(targetSpeed)
+	end
+end)
